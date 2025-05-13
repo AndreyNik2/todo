@@ -1,5 +1,14 @@
-import { Suspense, use, useState, useTransition } from "react";
-import { createUser, deleteUser, fetchUsers } from "../../shared/api";
+import {
+  Suspense,
+  use,
+  useActionState,
+  useState,
+  useTransition,
+  startTransition,
+} from "react";
+import { deleteUser, fetchUsers } from "../../shared/api";
+import { ErrorBoundary } from "react-error-boundary";
+import { createUserAction } from "./actions";
 
 type User = {
   id: string;
@@ -10,45 +19,42 @@ const defoultUsersPromise = fetchUsers();
 
 export function UsersPage() {
   const [userPromise, setUserPromise] = useState(defoultUsersPromise);
-  const refetchUsers = () => {
-    setUserPromise(fetchUsers());
-  };
-
+  const refetchUsers = () =>
+    startTransition(() => setUserPromise(fetchUsers()));
   return (
     <main className="container mx-auto p-4 pt-10 flex flex-col gap-4">
       <h1 className="text-3xl font-bold underline">Users</h1>
       <CreateUserForm refetchUsers={refetchUsers} />
-      <Suspense>
-        <UserList userPromise={userPromise} refetchUsers={refetchUsers} />
-      </Suspense>
+      <ErrorBoundary
+        fallbackRender={(e) => (
+          <div className="text-red-500">
+            Something went wrong: ${JSON.stringify(e)}
+            {""}
+          </div>
+        )}
+      >
+        <Suspense fallback={<div>Loading...</div>}>
+          <UserList userPromise={userPromise} refetchUsers={refetchUsers} />
+        </Suspense>
+      </ErrorBoundary>
     </main>
   );
 }
 
 export function CreateUserForm({ refetchUsers }: { refetchUsers: () => void }) {
-  const [isPending, startTransition] = useTransition();
-  const [email, setEmail] = useState("");
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    startTransition(async () => {
-      await createUser({ email, id: crypto.randomUUID() });
-      startTransition(() => {
-        refetchUsers();
-        setEmail("");
-      });
-    });
-  };
+  const [state, dispatch, isPending] = useActionState(
+    createUserAction({ refetchUsers }),
+    {email:""}
+  );
 
   return (
-    <form className="flex gap-2" onSubmit={handleSubmit}>
+    <form className="flex gap-2" action={dispatch}>
       <input
         className="border p-2 m-2 rounded"
         type="email"
-        value={email}
-        onChange={(event) => {
-          setEmail(event.target.value);
-        }}
+        name="email"
+        disabled={isPending}
+        defaultValue={state.email}
       />
       <button
         className="bg-blue-500 hover bg-blue-700 text-white font-bolt py-2 px-4 rounded"
@@ -57,6 +63,7 @@ export function CreateUserForm({ refetchUsers }: { refetchUsers: () => void }) {
       >
         Add
       </button>
+      {state.error && <div text-red-500>{state.error}</div>}
     </form>
   );
 }
@@ -78,23 +85,27 @@ export function UserList({
   );
 }
 
-export function UserCard({ user, refetchUsers }: { user: User; refetchUsers: () => void }) {
+export function UserCard({
+  user,
+  refetchUsers,
+}: {
+  user: User;
+  refetchUsers: () => void;
+}) {
   const [isPending, startTransition] = useTransition();
 
   const handleDelete = async () => {
     startTransition(async () => {
       await deleteUser(user.id);
-      startTransition(() => {
-        refetchUsers();
-      });
+      refetchUsers();
     });
   };
 
   return (
-    <li className="border p-2 m-2 rounded bg-grey-100" key={user.id}>
+    <li className="border p-2 m-2 rounded bg-grey-100 flex" key={user.id}>
       {user.email}
       <button
-        className="bg-red-500 hover bg-blue-700 text-white font-bolt py-2 px-4 rounded"
+        className="bg-red-500 hover bg-blue-700 text-white font-bolt py-2 px-4 rounded ml-auto"
         type="button"
         onClick={handleDelete}
         disabled={isPending}
