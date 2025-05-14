@@ -2,10 +2,6 @@
   "tascs": [],
   "users": [
     {
-      "id": "5599d616-0699-43d5-84f1-e11216ce2382",
-      "email": "admin@gmail.com"
-    },
-    {
       "id": "b5bb28c3-166e-48d6-ab33-de09924c5149",
       "email": "anna@gmail.com"
     },
@@ -18,16 +14,8 @@
       "email": "loveu@gmail.com"
     },
     {
-      "id": "068a9f43-6082-41ce-9e45-520d4ed66303",
-      "email": null
-    },
-    {
-      "id": "1828c024-e326-4006-8094-8cb11dd90175",
-      "email": "ac@dd.ff"
-    },
-    {
-      "id": "5ad611b7-6e02-46bc-9303-ac35dbac69dc",
-      "email": "acdc@gma.c"
+      "id": "0681fcdc-84e5-4747-9e8f-dc49e07537a5",
+      "email": "admin1@gmail.com"
     }
   ]
 }

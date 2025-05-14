@@ -1,4 +1,4 @@
-import { createUser } from "../../shared/api";
+import { createUser, deleteUser } from "../../shared/api";
 
 type CreateActionState = {
   error?: string;
@@ -25,5 +25,24 @@ export const createUserAction =
       return { email: "" };
     } catch {
       return { email, error: "Error while creating user" };
+    }
+  };
+
+type DeleteUserActionState = {
+  error?: string;
+};
+
+export const deleteUserAction =
+  ({ refetchUsers }: { refetchUsers: () => void }) =>
+  async (state: DeleteUserActionState, formDada:FormData) => {
+    try {
+      const id = formDada.get("id") as string
+      await deleteUser(id);
+      refetchUsers();
+      return {};
+    } catch {
+      return {
+        error: "Error while deleting user",
+      };
     }
   };

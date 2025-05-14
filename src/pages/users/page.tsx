@@ -2,25 +2,20 @@ import {
   Suspense,
   use,
   useActionState,
-  useState,
-  useTransition,
-  startTransition,
 } from "react";
-import { deleteUser, fetchUsers } from "../../shared/api";
 import { ErrorBoundary } from "react-error-boundary";
-import { createUserAction } from "./actions";
+import { createUserAction, deleteUserAction } from "./actions";
+import { useUsers } from "./use-user";
 
 type User = {
   id: string;
   email: string;
 };
 
-const defoultUsersPromise = fetchUsers();
+
 
 export function UsersPage() {
-  const [userPromise, setUserPromise] = useState(defoultUsersPromise);
-  const refetchUsers = () =>
-    startTransition(() => setUserPromise(fetchUsers()));
+  const [userPromise, refetchUsers] = useUsers()
   return (
     <main className="container mx-auto p-4 pt-10 flex flex-col gap-4">
       <h1 className="text-3xl font-bold underline">Users</h1>
@@ -44,7 +39,7 @@ export function UsersPage() {
 export function CreateUserForm({ refetchUsers }: { refetchUsers: () => void }) {
   const [state, dispatch, isPending] = useActionState(
     createUserAction({ refetchUsers }),
-    {email:""}
+    { email: "" }
   );
 
   return (
@@ -92,26 +87,24 @@ export function UserCard({
   user: User;
   refetchUsers: () => void;
 }) {
-  const [isPending, startTransition] = useTransition();
-
-  const handleDelete = async () => {
-    startTransition(async () => {
-      await deleteUser(user.id);
-      refetchUsers();
-    });
-  };
+  const [state, handleDelete, isPending] = useActionState(
+    deleteUserAction({ id: user.id, refetchUsers }),
+    {}
+  );
 
   return (
     <li className="border p-2 m-2 rounded bg-grey-100 flex" key={user.id}>
       {user.email}
-      <button
-        className="bg-red-500 hover bg-blue-700 text-white font-bolt py-2 px-4 rounded ml-auto"
-        type="button"
-        onClick={handleDelete}
-        disabled={isPending}
-      >
-        Delete
-      </button>
+      <form action={handleDelete}>
+        <button
+          className="bg-red-500 hover bg-blue-700 text-white font-bolt py-2 px-4 rounded ml-auto"
+          type="button"
+          disabled={isPending}
+        >
+          Delete
+        </button>
+      </form>
+      {state.error && <div text-red-500>{state.error}</div>}
     </li>
   );
 }
