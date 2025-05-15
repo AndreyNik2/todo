@@ -1,10 +1,6 @@
-import {
-  Suspense,
-  use,
-  useActionState,
-} from "react";
+import { Suspense, use, useActionState, useOptimistic } from "react";
 import { ErrorBoundary } from "react-error-boundary";
-import { createUserAction, deleteUserAction } from "./actions";
+import { type CreateUserActions, type DeleteUserActions } from "./actions";
 import { useUsers } from "./use-user";
 
 type User = {
@@ -12,14 +8,12 @@ type User = {
   email: string;
 };
 
-
-
 export function UsersPage() {
-  const [userPromise, refetchUsers] = useUsers()
+  const { useUsersList, createUserAction, deleteUserAction } = useUsers();
   return (
     <main className="container mx-auto p-4 pt-10 flex flex-col gap-4">
       <h1 className="text-3xl font-bold underline">Users</h1>
-      <CreateUserForm refetchUsers={refetchUsers} />
+      <CreateUserForm createUserAction={createUserAction} />
       <ErrorBoundary
         fallbackRender={(e) => (
           <div className="text-red-500">
@@ -29,52 +23,65 @@ export function UsersPage() {
         )}
       >
         <Suspense fallback={<div>Loading...</div>}>
-          <UserList userPromise={userPromise} refetchUsers={refetchUsers} />
+          <UserList
+            useUsersList={useUsersList}
+            deleteUserAction={deleteUserAction}
+          />
         </Suspense>
       </ErrorBoundary>
     </main>
   );
 }
 
-export function CreateUserForm({ refetchUsers }: { refetchUsers: () => void }) {
-  const [state, dispatch, isPending] = useActionState(
-    createUserAction({ refetchUsers }),
-    { email: "" }
-  );
+export function CreateUserForm({
+  createUserAction,
+}: {
+  createUserAction: CreateUserActions;
+}) {
+  const [state, dispatch] = useActionState(createUserAction, {
+    email: "",
+  });
+
+  const [optimisticState, setOptimisticState]=useOptimistic(state)
 
   return (
-    <form className="flex gap-2" action={dispatch}>
+    <form className="flex gap-2" action={(formDada: FormData) => {
+      setOptimisticState({ email: "" })
+      dispatch(formDada)
+    }}>
       <input
         className="border p-2 m-2 rounded"
         type="email"
         name="email"
-        disabled={isPending}
-        defaultValue={state.email}
+        defaultValue={optimisticState.email}
       />
       <button
         className="bg-blue-500 hover bg-blue-700 text-white font-bolt py-2 px-4 rounded"
         type="submit"
-        disabled={isPending}
       >
         Add
       </button>
-      {state.error && <div text-red-500>{state.error}</div>}
+      {optimisticState.error && <div text-red-500>{optimisticState.error}</div>}
     </form>
   );
 }
 
 export function UserList({
-  userPromise,
-  refetchUsers,
+  deleteUserAction,
+  useUsersList,
 }: {
-  userPromise: Promise<User[]>;
-  refetchUsers: () => void;
+  deleteUserAction: DeleteUserActions;
+  useUsersList: () => User[];
 }) {
-  const users = use(userPromise);
+  const users = useUsersList();
   return (
     <ul className="flex flex-col">
       {users.map((user) => (
-        <UserCard key={user.id} user={user} refetchUsers={refetchUsers} />
+        <UserCard
+          key={user.id}
+          user={user}
+          deleteUserAction={deleteUserAction}
+        />
       ))}
     </ul>
   );
@@ -82,24 +89,21 @@ export function UserList({
 
 export function UserCard({
   user,
-  refetchUsers,
+  deleteUserAction,
 }: {
   user: User;
-  refetchUsers: () => void;
+  deleteUserAction: DeleteUserActions;
 }) {
-  const [state, handleDelete, isPending] = useActionState(
-    deleteUserAction({ id: user.id, refetchUsers }),
-    {}
-  );
+  const [state, handleDelete] = useActionState(deleteUserAction, {});
 
   return (
     <li className="border p-2 m-2 rounded bg-grey-100 flex" key={user.id}>
       {user.email}
       <form action={handleDelete}>
+        <input type="hidden" name="id" value={user.id} />
         <button
           className="bg-red-500 hover bg-blue-700 text-white font-bolt py-2 px-4 rounded ml-auto"
           type="button"
-          disabled={isPending}
         >
           Delete
         </button>
