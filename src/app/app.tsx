@@ -8,7 +8,7 @@ export function App() {
   return (
     <Routes>
       <Route path="/" element={<UsersPage />}></Route>
-      <Route path="/:userID/tascs" element={<TodoListPage />}></Route>
+      <Route path="/:userId/tasks" element={<TodoListPage />}></Route>
     </Routes>
   );
 }
