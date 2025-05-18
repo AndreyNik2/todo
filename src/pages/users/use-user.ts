@@ -1,6 +1,6 @@
-import { User } from "./../../shared/api";
+
 import { useState, startTransition, useOptimistic, use } from "react";
-import { fetchUsers } from "../../shared/api";
+import { fetchUsers, type User } from "../../shared/api";
 import { createUserAction, deleteUserAction } from "./actions";
 
 const defoultUsersPromise = fetchUsers();

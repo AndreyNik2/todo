@@ -1,7 +1,8 @@
-import { Suspense, use, useActionState, useOptimistic } from "react";
+import { Suspense, useActionState, useOptimistic } from "react";
 import { ErrorBoundary } from "react-error-boundary";
 import { type CreateUserActions, type DeleteUserActions } from "./actions";
 import { useUsers } from "./use-user";
+import { Link } from "react-router";
 
 type User = {
   id: string;
@@ -42,13 +43,16 @@ export function CreateUserForm({
     email: "",
   });
 
-  const [optimisticState, setOptimisticState]=useOptimistic(state)
+  const [optimisticState, setOptimisticState] = useOptimistic(state);
 
   return (
-    <form className="flex gap-2" action={(formDada: FormData) => {
-      setOptimisticState({ email: "" })
-      dispatch(formDada)
-    }}>
+    <form
+      className="flex gap-2"
+      action={(formDada: FormData) => {
+        setOptimisticState({ email: "" });
+        dispatch(formDada);
+      }}
+    >
       <input
         className="border p-2 m-2 rounded"
         type="email"
@@ -99,11 +103,15 @@ export function UserCard({
   return (
     <li className="border p-2 m-2 rounded bg-grey-100 flex" key={user.id}>
       {user.email}
-      <form action={handleDelete}>
+      <form className="ml-auto" action={handleDelete}>
         <input type="hidden" name="id" value={user.id} />
+        <Link
+          to={`/${user.id}/tasks`}
+          className="bg-blue-700 text-white font-bold py-2 px-4  rounded ml-auto disabled:bg-grey-400"
+        >Tasks</Link>
         <button
-          className="bg-red-500 hover bg-blue-700 text-white font-bolt py-2 px-4 rounded ml-auto"
-          type="button"
+          className="bg-red-500 hover:bg-red-700 text-white font-bolt py-2 px-4 rounded ml-2"
+          type="submit"
         >
           Delete
         </button>
