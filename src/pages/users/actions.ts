@@ -57,8 +57,8 @@ export function deleteUserAction({
   refetchUsers: () => void;
   optimisticDelete: (id: string) => void;
 }): DeleteUserActions {
-  return async (_, formDada) => {
-    const id = formDada.get("id") as string;
+  return async (_, formData) => {
+    const id = formData.get("id") as string;
     try {
       optimisticDelete(id);
       await deleteUser(id);

@@ -103,7 +103,7 @@ export function UserCard({
   return (
     <li className="border p-2 m-2 rounded bg-grey-100 flex" key={user.id}>
       {user.email}
-      <form action={handleDelete}>
+      <form className="ml-auto" action={handleDelete}>
         <input type="hidden" name="id" value={user.id} />
         <Link
           to={`/${user.id}/tasks`}
@@ -111,7 +111,7 @@ export function UserCard({
         >Tasks</Link>
         <button
           className="bg-red-500 hover:bg-red-700 text-white font-bolt py-2 px-4 rounded ml-2"
-          type="button"
+          type="submit"
         >
           Delete
         </button>
