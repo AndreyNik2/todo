@@ -32,7 +32,7 @@ export type Task = {
   createdAt: number;
 };
 
-export type PoginatedResponse<T> = {
+export type PaginatedResponse<T> = {
   data: T[];
   first: number;
   items: number;

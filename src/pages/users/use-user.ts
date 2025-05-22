@@ -1,13 +1,10 @@
-
-import { useState, startTransition, useOptimistic, use } from "react";
-import { fetchUsers, type User } from "../../shared/api";
+import { useOptimistic, use } from "react";
+import { type User } from "../../shared/api";
 import { createUserAction, deleteUserAction } from "./actions";
+import { useUsersGlobal } from "../../entities/users-context";
 
-const defoultUsersPromise = fetchUsers();
 export function useUsers() {
-  const [userPromise, setUserPromise] = useState(defoultUsersPromise);
-  const refetchUsers = () =>
-    startTransition(() => setUserPromise(fetchUsers()));
+  const { refetchUsers, usersPromise } = useUsersGlobal();
 
   const [createdUsers, optimisticCreate] = useOptimistic(
     [] as User[],
@@ -15,14 +12,17 @@ export function useUsers() {
   );
 
   const [deletedUsersIds, optimisticDelete] = useOptimistic(
-    [] as string[], (deletedUsers, id:string)=>deletedUsers.concat(id)
-  )
+    [] as string[],
+    (deletedUsers, id: string) => deletedUsers.concat(id)
+  );
 
   const useUsersList = () => {
-    const userse = use(userPromise)
+    const userse = use(usersPromise);
 
-    return userse.concat(createdUsers).filter((user) => !deletedUsersIds.includes(user.id));
-  }
+    return userse
+      .concat(createdUsers)
+      .filter((user) => !deletedUsersIds.includes(user.id));
+  };
 
   return {
     createUserAction: createUserAction({ refetchUsers, optimisticCreate }),

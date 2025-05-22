@@ -9,7 +9,11 @@ import {
 import { ErrorBoundary } from "react-error-boundary";
 import { fetchTasks, type Task } from "../../shared/api";
 import { useParams } from "react-router-dom";
-import { createTaskAction, deleteTaskAction } from "./actions";
+import {
+  createTaskAction,
+  deleteTaskAction,
+} from "./actions";
+import { useUsersGlobal } from "../../entities/users-context";
 
 export function TodoListPage() {
   const { userId = "" } = useParams();
@@ -27,7 +31,14 @@ export function TodoListPage() {
 
   return (
     <main className="container mx-auto p-4 pt-10 flex flex-col gap-4">
-      <h1 className="text-3xl font-bold underline">Tasks user {userId}</h1>
+      <h1 className="text-3xl font-bold underline">
+        Tasks{" "}
+        {
+          <Suspense>
+            <UserPreview userId={userId} />
+          </Suspense>
+        }
+      </h1>
       <CreateTaskForm refetchTasks={refetchTasks} userId={userId} />
       <ErrorBoundary
         fallbackRender={(e) => (
@@ -38,12 +49,20 @@ export function TodoListPage() {
         )}
       >
         <Suspense fallback={<div>Loading...</div>}>
-          <TaskList tasksPromise={tasksPromise} refetchTasks={refetchTasks}/>
+          <TaskList tasksPromise={tasksPromise} refetchTasks={refetchTasks} />
         </Suspense>
       </ErrorBoundary>
     </main>
   );
 }
+
+function UserPreview({ userId }: { userId: string }) {
+  const { usersPromise } = useUsersGlobal();
+  const users = use(usersPromise);
+
+  return <span>{users.find((u) => u.id === userId)?.email}</span>;
+}
+
 
 export function CreateTaskForm({
   userId,

@@ -12,22 +12,22 @@ export type CreateTaskActions = (
 
 export function createTaskAction({
   refetchTasks,
-  userId
+  userId,
 }: {
-    userId:string
+  userId: string;
   refetchTasks: () => void;
 }): CreateTaskActions {
   return async (_, formData: FormData) => {
     const title = formData.get("title") as string;
     try {
       const task = {
-          createdAt: Date.now(),
-          done: false,
-          userId,
-          title,
-          id: crypto.randomUUID()
+        createdAt: Date.now(),
+        done: false,
+        userId,
+        title,
+        id: crypto.randomUUID(),
       };
-      
+
       await createTask(task);
       refetchTasks();
       return { title: "" };
@@ -47,7 +47,7 @@ export type DeleteTaskActions = (
 ) => Promise<DeleteTaskActionState>;
 
 export function deleteTaskAction({
-  refetchTasks
+  refetchTasks,
 }: {
   refetchTasks: () => void;
 }): DeleteTaskActions {
