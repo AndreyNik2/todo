@@ -5,29 +5,47 @@ import {
   useActionState,
   useMemo,
   useState,
+  useTransition,
 } from "react";
 import { ErrorBoundary } from "react-error-boundary";
-import { fetchTasks, type Task } from "../../shared/api";
-import { useParams } from "react-router-dom";
 import {
-  createTaskAction,
-  deleteTaskAction,
-} from "./actions";
+  fetchTasks,
+  type PaginatedResponse,
+  type Task,
+} from "../../shared/api";
+import { useParams } from "react-router-dom";
+import { createTaskAction, deleteTaskAction } from "./actions";
 import { useUsersGlobal } from "../../entities/users-context";
 
 export function TodoListPage() {
   const { userId = "" } = useParams();
+  const [page, setPage] = useState(1);
+  const [serch, setSerch] = useState('')
   const [paginatedTasksPromise, setTasksPromise] = useState(() =>
     fetchTasks({ filters: { userId } })
   );
 
   const refetchTasks = () =>
-    startTransition(() => setTasksPromise(fetchTasks({ filters: { userId } })));
+    startTransition(() =>
+      setTasksPromise(fetchTasks({ filters: { userId }, page }))
+    );
+  
+  const onPageChange = (newPage: number) => {
+    console.log(newPage)
+    setPage(newPage);
+    setTasksPromise(fetchTasks({ filters: { userId }, page:newPage }));
+  }
+  fetchTasks({ filters: { userId }, page })
+
 
   const tasksPromise = useMemo(
     () => paginatedTasksPromise.then((r) => r.data),
     [paginatedTasksPromise]
   );
+
+  const handeleChangeSerch = (e:React.ChangeEvent<HTMLInputElement>) => {
+    setSerch(e.target.value)
+  }
 
   return (
     <main className="container mx-auto p-4 pt-10 flex flex-col gap-4">
@@ -36,6 +54,7 @@ export function TodoListPage() {
         {
           <Suspense>
             <UserPreview userId={userId} />
+            <Pagination tasksPaginated={paginatedTasksPromise} page={1} onPageChange={onPageChange  } />
           </Suspense>
         }
       </h1>
@@ -63,6 +82,67 @@ function UserPreview({ userId }: { userId: string }) {
   return <span>{users.find((u) => u.id === userId)?.email}</span>;
 }
 
+function Pagination({
+  tasksPaginated,
+  page,
+  onPageChange,
+}: {
+  tasksPaginated: Promise<PaginatedResponse<Task>>;
+  page: number;
+  onPageChange?: (page: number) => void;
+}) {
+  const [isLoading, startTransition] = useTransition();
+  const { last, first, next, prev, pages } = use(tasksPaginated);
+
+  const onHandlePageChange = (page: number) => {
+    startTransition(() => onPageChange?.(page));
+  };
+  return (
+    <nav
+      className={`${
+        isLoading ? "opacity-50" : ""
+      }flex items-center justify-between`}
+    >
+      <div className="grid grid-cols-4 gap-2">
+        <button
+          onClick={() => onHandlePageChange(first)}
+          className="px-3 py-2 rounded-l"
+          disabled={isLoading}
+        >
+          First({first})
+        </button>
+        {prev && (
+          <button
+            onClick={() => onHandlePageChange(prev)}
+            className="px-3 py-2"
+            disabled={isLoading}
+          >
+            Prev({prev})
+          </button>
+        )}
+        {next && (
+          <button
+            onClick={() => onHandlePageChange(next)}
+            className="px-3 py-2"
+            disabled={isLoading}
+          >
+            Next({next})
+          </button>
+        )}
+        <button
+          onClick={() => onHandlePageChange(pages)}
+          className="px-3 py-2 rounded-r"
+          disabled={isLoading}
+        >
+          Last({last})
+        </button>
+      </div>
+      <span className="text-sm">
+        Page {page} of {pages}
+      </span>
+    </nav>
+  );
+}
 
 export function CreateTaskForm({
   userId,
